@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1a5c3a">
+<title>Dice Poker Scorecard</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='6' y='6' width='88' height='88' rx='18' fill='%231a5c3a'/%3E%3Ccircle cx='30' cy='30' r='9' fill='%23fffdf7'/%3E%3Ccircle cx='70' cy='30' r='9' fill='%23fffdf7'/%3E%3Ccircle cx='50' cy='50' r='9' fill='%23fffdf7'/%3E%3Ccircle cx='30' cy='70' r='9' fill='%23fffdf7'/%3E%3Ccircle cx='70' cy='70' r='9' fill='%23fffdf7'/%3E%3C/svg%3E">
+<meta name="description" content="A scorecard for the classic five-dice poker game. Enter your dice, tap a category, and every bonus is scored for you.">
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --card: #ffffff;
+    --ink: #23241f;
+    --muted: #79766c;
+    --line: #e3ddd0;
+    --felt: #1a5c3a;
+    --felt-ink: #eaf5ee;
+    --accent: #b3532e;
+    --accent-ink: #ffffff;
+    --preview: #1a5c3a;
+    --zero: #a39f93;
+    --arm: #fdf0e8;
+    --die-face: #fffdf7;
+    --die-pip: #23241f;
+    --shadow: 0 1px 3px rgba(35, 36, 31, 0.12);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #171814;
+      --card: #21231d;
+      --ink: #ece9df;
+      --muted: #98948a;
+      --line: #34362e;
+      --felt: #143f2a;
+      --felt-ink: #d7eade;
+      --accent: #d0683c;
+      --accent-ink: #ffffff;
+      --preview: #7dc79a;
+      --zero: #6d6a60;
+      --arm: #3a2c22;
+      --die-face: #ece9df;
+      --die-pip: #23241f;
+      --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
+    min-height: 100%;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+  button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+
+  .app { max-width: 480px; margin: 0 auto; padding: 0 12px; }
+
+  header.top {
+    background: var(--felt);
+    color: var(--felt-ink);
+    margin: 0 -12px 12px;
+    padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  header.top h1 { font-size: 1.05rem; font-weight: 700; letter-spacing: 0.02em; }
+  header.top .sub { font-size: 0.72rem; opacity: 0.75; }
+  .top-actions { display: flex; gap: 4px; }
+  .top-actions button {
+    padding: 8px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 600;
+    background: rgba(255, 255, 255, 0.14); color: inherit;
+  }
+
+  /* player tabs */
+  .tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; margin-bottom: 10px; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex: 0 0 auto; padding: 7px 14px; border-radius: 999px; font-size: 0.85rem; font-weight: 600;
+    background: var(--card); color: var(--muted); box-shadow: var(--shadow); white-space: nowrap;
+  }
+  .tab.active { background: var(--accent); color: var(--accent-ink); }
+  .tab.add { color: var(--accent); font-weight: 700; }
+  .tab .tab-score { font-weight: 400; opacity: 0.8; font-size: 0.75rem; margin-left: 4px; }
+
+  /* dice entry */
+  .dice-panel {
+    background: var(--card); border-radius: 14px; box-shadow: var(--shadow);
+    padding: 12px; margin-bottom: 12px;
+  }
+  .dice-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; }
+  .die {
+    width: 52px; height: 52px; border-radius: 11px;
+    background: var(--die-face); border: 2px solid var(--line);
+    display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
+    padding: 7px; position: relative;
+  }
+  .die.sel { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+  .die .pip { width: 9px; height: 9px; border-radius: 50%; background: var(--die-pip); place-self: center; }
+  .die .unset { grid-column: 1 / 4; grid-row: 1 / 4; place-self: center; color: var(--zero); font-size: 1.4rem; font-weight: 700; }
+  .pad { display: flex; justify-content: center; gap: 6px; }
+  .pad button {
+    width: 44px; height: 40px; border-radius: 9px; font-weight: 700; font-size: 1.05rem;
+    background: var(--bg); border: 1px solid var(--line);
+  }
+  .pad button:active { background: var(--accent); color: var(--accent-ink); }
+  .pad .clear { font-size: 0.72rem; font-weight: 600; color: var(--muted); width: 52px; }
+  .dice-hint { text-align: center; font-size: 0.75rem; color: var(--muted); margin-top: 8px; }
+
+  .joker-banner {
+    background: var(--accent); color: var(--accent-ink);
+    border-radius: 10px; padding: 8px 12px; font-size: 0.82rem; font-weight: 600;
+    text-align: center; margin-bottom: 12px;
+  }
+
+  /* scorecard */
+  .board { background: var(--card); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; margin-bottom: 12px; }
+  .board h2 {
+    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em;
+    color: var(--felt-ink); background: var(--felt); padding: 7px 14px;
+  }
+  @media (prefers-color-scheme: dark) { .board h2 { color: var(--felt-ink); } }
+  .row {
+    display: flex; align-items: center; width: 100%; text-align: left;
+    padding: 11px 14px; border-top: 1px solid var(--line); gap: 10px;
+  }
+  .row:first-of-type { border-top: none; }
+  .row .cat { flex: 1; font-size: 0.92rem; font-weight: 600; }
+  .row .cat small { display: block; font-weight: 400; font-size: 0.7rem; color: var(--muted); }
+  .row .val { font-variant-numeric: tabular-nums; font-size: 1rem; font-weight: 700; }
+  .row.open .val.preview { color: var(--preview); }
+  .row.open .val.preview.zero { color: var(--zero); font-weight: 500; }
+  .row.open .val.idle { color: var(--zero); font-weight: 400; }
+  .row.locked { background: transparent; }
+  .row.locked .val { color: var(--ink); }
+  .row.locked .cat { color: var(--muted); font-weight: 500; }
+  .row.disallowed { opacity: 0.38; }
+  .row.armed { background: var(--arm); }
+  .row .confirm {
+    background: var(--accent); color: var(--accent-ink);
+    padding: 7px 13px; border-radius: 8px; font-size: 0.8rem; font-weight: 700;
+  }
+  .row .cancel { color: var(--muted); font-size: 0.8rem; padding: 7px 6px; }
+  .subrow { display: flex; justify-content: space-between; padding: 8px 14px; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--muted); }
+  .subrow b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .subrow.bonus-hit b { color: var(--preview); }
+
+  /* totals bar */
+  .totals {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--felt); color: var(--felt-ink);
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+    display: flex; justify-content: center; gap: 22px;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.18);
+  }
+  .totals .t { text-align: center; }
+  .totals .t .n { font-size: 1.15rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .totals .t .l { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.75; }
+
+  .fanfare {
+    background: var(--card); border-radius: 14px; box-shadow: var(--shadow);
+    text-align: center; padding: 18px 14px; margin-bottom: 12px;
+  }
+  .fanfare .big { font-size: 2rem; font-weight: 800; color: var(--accent); }
+  .fanfare p { color: var(--muted); font-size: 0.85rem; margin-top: 2px; }
+
+  /* modal */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(20, 20, 16, 0.55);
+    display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 10;
+  }
+  .modal {
+    background: var(--card); border-radius: 16px; padding: 20px;
+    max-width: 340px; width: 100%; text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  }
+  .modal h3 { font-size: 1rem; margin-bottom: 10px; }
+  .modal p { font-size: 0.82rem; color: var(--muted); margin-bottom: 12px; }
+  .modal canvas { width: 220px; height: 220px; image-rendering: pixelated; background: #fff; padding: 0; border-radius: 8px; }
+  .modal .btnrow { display: flex; gap: 8px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+  .modal .btnrow button, .modal .btnrow .primary {
+    padding: 9px 14px; border-radius: 9px; font-size: 0.85rem; font-weight: 600;
+    background: var(--bg); border: 1px solid var(--line);
+  }
+  .modal .btnrow .primary { background: var(--accent); color: var(--accent-ink); border: none; }
+  .modal .btnrow .danger { color: #b3402e; }
+  .modal input {
+    width: 100%; padding: 10px; border-radius: 9px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--ink); font: inherit; margin-bottom: 4px; text-align: center;
+  }
+
+  .toast {
+    position: fixed; left: 50%; bottom: calc(86px + env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    background: var(--ink); color: var(--bg);
+    padding: 9px 18px; border-radius: 999px; font-size: 0.85rem; font-weight: 600;
+    z-index: 20; pointer-events: none; opacity: 0; transition: opacity 0.25s;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+  <div class="app" id="app"></div>
+  <div id="modal-root"></div>
+  <div class="toast" id="toast"></div>
+  <script src="js/scoring.js"></script>
+  <script src="js/qr.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

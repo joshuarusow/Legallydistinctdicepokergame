@@ -1,0 +1,20 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Scoring engine tests
+        run: node tests/scoring.test.js
+      - name: Install QR verification deps
+        run: pip install zxing-cpp pillow
+      - name: QR encoder round-trip verification
+        run: python3 tests/qr_verify.py
